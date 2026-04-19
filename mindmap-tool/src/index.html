@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GASベース マインドマップ (プロトタイプ)</title>
+    <!-- Tailwind CSS (デザイン用) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- jsMind (マインドマップ描画用ライブラリ) -->
+    <link type="text/css" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsmind@0.5.5/style/jsmind.css" />
+    <style>
+        /* jsMindのコンテナを画面いっぱいに広げる */
+        #jsmind_container {
+            width: 100%;
+            height: calc(100vh - 64px); /* ヘッダーの分を引く */
+            background-color: #f3f4f6; /* Tailwindの gray-100 */
+        }
+        /* jsMindのデフォルトテーマを少しモダンに */
+        jmnode {
+            border-radius: 6px;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+            font-family: sans-serif;
+            padding: 8px 12px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
+
+    <!-- ツールバー -->
+    <header class="bg-white shadow-sm h-16 flex items-center justify-between px-6 shrink-0 z-10">
+        <h1 class="text-xl font-bold text-gray-800">💡 独自マインドマップ</h1>
+        <div class="flex items-center space-x-2">
+            <button onclick="addChild()" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium">
+                ＋ 子
+            </button>
+            <button onclick="addBrother()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium">
+                ＋ 兄弟
+            </button>
+            <button onclick="editNode()" class="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium">
+                編集
+            </button>
+            <button onclick="removeNode()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium">
+                削除
+            </button>
+            
+            <div class="w-px h-6 bg-gray-300 mx-2"></div>
+            
+            <!-- ローカルファイル操作 -->
+            <button onclick="saveToLocal()" class="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium flex items-center" title="PCにダウンロード">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                DL
+            </button>
+            <label class="bg-amber-600 hover:bg-amber-700 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium flex items-center cursor-pointer" title="PCから読み込み">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                読込
+                <input type="file" id="fileInput" class="hidden" accept=".json" onchange="loadFromLocal(event)">
+            </label>
+
+            <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+            <!-- ブラウザ履歴操作 -->
+            <button onclick="saveToHistory()" class="bg-purple-500 hover:bg-purple-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium flex items-center" title="ブラウザに一時保存">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                履歴保存
+            </button>
+            <button onclick="showHistoryModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium flex items-center" title="ブラウザの履歴から開く">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                履歴一覧
+            </button>
+
+            <div class="w-px h-6 bg-gray-300 mx-2"></div>
+
+            <!-- GAS保存 -->
+            <button onclick="saveToGAS()" class="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded shadow transition text-sm font-medium flex items-center">
+                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4"></path></svg>
+                GAS保存
+            </button>
+        </div>
+    </header>
+
+    <!-- マインドマップ描画エリア -->
+    <div id="jsmind_container"></div>
+
+    <!-- 履歴モーダル -->
+    <div id="historyModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
+        <div class="bg-white rounded-lg shadow-xl w-96 max-w-full m-4 flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b flex justify-between items-center bg-gray-50 rounded-t-lg">
+                <h2 class="text-lg font-bold text-gray-800">ブラウザの保存履歴</h2>
+                <button onclick="closeHistoryModal()" class="text-gray-500 hover:text-gray-800 font-bold text-xl">&times;</button>
+            </div>
+            <div class="p-4 overflow-y-auto flex-grow">
+                <ul id="historyList" class="space-y-2">
+                    <!-- 履歴リストがここに入る -->
+                </ul>
+            </div>
+            <div class="p-4 border-t bg-gray-50 text-xs text-gray-500 rounded-b-lg">
+                ※この履歴は現在のブラウザにのみ保存されます。最新10件まで保持します。
+            </div>
+        </div>
+    </div>
+
+    <!-- jsMind スクリプト -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmind@0.5.5/js/jsmind.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/jsmind@0.5.5/js/jsmind.draggable.js"></script>
+    
+    <script>
+        let jm = null;
+
+        // 初期データの定義（初回起動時やデータが空の場合に使用）
+        const defaultData = {
+            "meta": { "name": "SlackStructure", "author": "User", "version": "1.0" },
+            "format": "node_tree",
+            "data": {
+                "id": "root", "topic": "Slack階層化アイデア", "children": [
+                    { "id": "sub1", "topic": "1. 命名規則（プレフィックス）", "children": [
+                        { "id": "sub1-1", "topic": "例: #pj-A-dev" },
+                        { "id": "sub1-2", "topic": "一番簡単で確実" }
+                    ]},
+                    { "id": "sub2", "topic": "2. カスタムセクション", "children": [
+                        { "id": "sub2-1", "topic": "有料プラン限定" },
+                        { "id": "sub2-2", "topic": "見た目が一番フォルダに近い" }
+                    ]},
+                    { "id": "sub3", "topic": "3. Canvasポータル化", "children": [
+                        { "id": "sub3-1", "topic": "リンク集を作る" }
+                    ]}
+                ]
+            }
+        };
+
+        // マインドマップの初期化
+        function initMindMap(data) {
+            // 既存のインスタンスがあれば破棄する（再読み込み対応）
+            if (jm != null) {
+                document.getElementById('jsmind_container').innerHTML = '';
+            }
+
+            const options = {
+                container: 'jsmind_container',
+                editable: true,       // 編集可能にする
+                theme: 'primary',     // テーマカラー
+                shortcut: {
+                    enable: true,     // ショートカットキー有効化
+                    handles: {},      // デフォルトのショートカットを使用
+                    mapping: {        // キーマッピングのカスタマイズ
+                        addchild: 45, // Insert
+                        addbrother: 13, // Enter
+                        editnode: 113, // F2
+                        delnode: 46   // Delete
+                    }
+                }
+            };
+            jm = new jsMind(options);
+            jm.show(data);
+        }
+
+        // ノード操作関数
+        function addChild() {
+            const selected_node = jm.get_selected_node();
+            if (!selected_node) { showMessage('ノードを選択してください'); return; }
+            const nodeid = jsMind.util.uuid.newid();
+            jm.add_node(selected_node, nodeid, '新しい子ノード');
+            jm.begin_edit(nodeid); // 追加後すぐに編集状態にする
+        }
+
+        function addBrother() {
+            const selected_node = jm.get_selected_node();
+            if (!selected_node) { showMessage('ノードを選択してください'); return; }
+            if (selected_node.isroot) { showMessage('ルートノードに兄弟は追加できません'); return; }
+            const nodeid = jsMind.util.uuid.newid();
+            jm.insert_node_after(selected_node, nodeid, '新しい兄弟ノード');
+            jm.begin_edit(nodeid);
+        }
+
+        function editNode() {
+            const selected_node = jm.get_selected_node();
+            if (!selected_node) { showMessage('ノードを選択してください'); return; }
+            jm.begin_edit(selected_node);
+        }
+
+        function removeNode() {
+            const selected_node = jm.get_selected_node();
+            if (!selected_node) { showMessage('ノードを選択してください'); return; }
+            if (selected_node.isroot) { showMessage('ルートノードは削除できません'); return; }
+            jm.remove_node(selected_node);
+        }
+
+        // 簡易メッセージ表示（alertの代わり）
+        function showMessage(msg) {
+            alert(msg);
+        }
+
+        // 🌟 新機能: ローカルに保存（ダウンロード）
+        function saveToLocal() {
+            const mind_data = jm.get_data();
+            const jsonString = jsMind.util.json.json2string(mind_data);
+            
+            // Blobを作成してダウンロードリンクを生成
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            // aタグを作って強制クリックさせる
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'mindmap_' + new Date().toISOString().slice(0,10) + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            showMessage('PCに保存しました。');
+        }
+
+        // 🌟 新機能: ローカルから読み込み
+        function loadFromLocal(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const contents = e.target.result;
+                    const parsedData = JSON.parse(contents);
+                    initMindMap(parsedData);
+                    showMessage('PCから読み込みました。');
+                } catch (error) {
+                    showMessage('ファイルの読み込みに失敗しました。正しいJSONファイルか確認してください。');
+                }
+                // inputの値をクリアして同じファイルを連続で読み込めるようにする
+                event.target.value = '';
+            };
+            reader.readAsText(file);
+        }
+
+        // 🌟 新機能: ブラウザのローカルストレージ（履歴）機能
+        const HISTORY_KEY = 'mindmap_history';
+
+        function saveToHistory() {
+            const mind_data = jm.get_data();
+            const rootNode = mind_data.data;
+            const title = rootNode.topic || "無題のマップ";
+            
+            // 現在の日時をフォーマット
+            const now = new Date();
+            const timestamp = now.getFullYear() + '/' + (now.getMonth()+1) + '/' + now.getDate() + ' ' + now.getHours() + ':' + String(now.getMinutes()).padStart(2, '0');
+            
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            } catch(e) {
+                history = [];
+            }
+            
+            // 新しい履歴を先頭に追加
+            history.unshift({
+                id: Date.now().toString(),
+                title: title,
+                timestamp: timestamp,
+                data: mind_data
+            });
+            
+            // 最大10件に制限
+            if (history.length > 10) {
+                history = history.slice(0, 10);
+            }
+            
+            localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+            showMessage('ブラウザの履歴に保存しました');
+        }
+
+        function showHistoryModal() {
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            } catch(e) {
+                history = [];
+            }
+
+            const listEl = document.getElementById('historyList');
+            listEl.innerHTML = '';
+            
+            if (history.length === 0) {
+                listEl.innerHTML = '<li class="p-4 text-center text-gray-500">保存された履歴はありません</li>';
+            } else {
+                history.forEach(item => {
+                    const li = document.createElement('li');
+                    li.className = "flex justify-between items-center p-3 border rounded hover:bg-blue-50 transition";
+                    li.innerHTML = `
+                        <div class="overflow-hidden pr-2">
+                            <div class="font-bold text-gray-800 truncate">${item.title}</div>
+                            <div class="text-xs text-gray-500">${item.timestamp}</div>
+                        </div>
+                        <button onclick="loadFromHistory('${item.id}')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1.5 rounded text-sm shrink-0 shadow">開く</button>
+                    `;
+                    listEl.appendChild(li);
+                });
+            }
+            
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
+
+        function loadFromHistory(id) {
+            let history = [];
+            try {
+                history = JSON.parse(localStorage.getItem(HISTORY_KEY) || '[]');
+            } catch(e) {
+                return;
+            }
+
+            const target = history.find(h => h.id === id);
+            if (target) {
+                initMindMap(target.data);
+                closeHistoryModal();
+                showMessage('履歴から読み込みました');
+            }
+        }
+
+        // GASへのデータ保存
+        function saveToGAS() {
+            const mind_data = jm.get_data();
+            const jsonString = jsMind.util.json.json2string(mind_data);
+            
+            // サーバー側（コード.gs）の関数を呼び出す
+            google.script.run
+              .withSuccessHandler(() => {
+                  showMessage('スプレッドシートに保存しました！');
+              })
+              .withFailureHandler((error) => {
+                  showMessage('保存エラー: ' + error.message);
+              })
+              .saveMindMapData(jsonString);
+        }
+
+        // ページロード時に実行: GASからデータを取得して描画
+        window.onload = function() {
+            // ローカルテスト用（google.scriptがない環境）のフォールバック
+            if (typeof google === 'undefined') {
+                initMindMap(defaultData);
+                return;
+            }
+
+            // サーバー側から保存されたデータを読み込む
+            google.script.run
+              .withSuccessHandler((savedData) => {
+                  if (savedData) {
+                      try {
+                          const parsedData = JSON.parse(savedData);
+                          initMindMap(parsedData);
+                      } catch(e) {
+                          initMindMap(defaultData); // 壊れていたらデフォルト
+                      }
+                  } else {
+                      initMindMap(defaultData); // 空ならデフォルト
+                  }
+              })
+              .withFailureHandler((error) => {
+                  showMessage('読み込みエラー: ' + error.message);
+                  initMindMap(defaultData);
+              })
+              .loadMindMapData();
+        };
+    </script>
+</body>
+</html>
