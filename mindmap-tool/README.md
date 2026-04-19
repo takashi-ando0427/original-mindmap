@@ -31,7 +31,7 @@
 
 ## 👤 著者
 
-**安藤 傑** (Takashi Ando)
+**安藤 傑** 
 
-[![Portfolio](https://img.shields.io/badge/Portfolio-Notion-000000?style=for-the-badge&logo=notion&logoColor=white)](#)
-[![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=for-the-badge&logo=github&logoColor=white)](#)
+[![Portfolio](https://img.shields.io/badge/Portfolio-Notion-000000?style=for-the-badge&logo=notion&logoColor=white)](https://takashi-ando.notion.site/347ca89335318077a4f1c5e0553a704c)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=for-the-badge&logo=github&logoColor=white)](https://github.com/takashi-ando0427)
