@@ -29,5 +29,9 @@
 - **環境に依存しない堅牢性**: GAS環境にデプロイしなくてもローカルのHTMLファイルとして開くだけで、ブラウザのLocalStorageやJSONダウンロード機能を用いてスタンドアロンで動作するよう設計しています。これにより、プロトタイプの迅速な検証を可能にしています。
 - **モダンなUI/UX**: Tailwind CSSを採用し、単なるGASのツールに留まらないモダンで洗練されたUIを実現しました。
 
----
-*Developed by Takashi Ando*
+## 👤 著者
+
+**安藤 傑** (Takashi Ando)
+
+[![Portfolio](https://img.shields.io/badge/Portfolio-Notion-000000?style=for-the-badge&logo=notion&logoColor=white)](#)
+[![GitHub](https://img.shields.io/badge/GitHub-Profile-181717?style=for-the-badge&logo=github&logoColor=white)](#)
