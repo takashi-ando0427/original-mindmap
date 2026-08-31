@@ -26,4 +26,7 @@
 定義は `.claude/skills/neta-shushu/SKILL.md`。
 
 ## ファイル命名
-`YYYY-MM-DD_テーマ名_research.md`
+`（テーマ名）リサーチ結果/` フォルダに次の3ファイル
+- `youtube_リサーチ.md`
+- `x_リサーチ.md`
+- `deep_リサーチ.md`（ネット検索のレポート＋3経路横断のまとめ）
