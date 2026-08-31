@@ -21,5 +21,9 @@
 3. 結論を先に一文で言語化する
 4. 見出し構成まで落とし込み、`2_記事生成` へ渡す
 
+## 使うスキル
+`neta-shushu`（ネタ収集）… 3経路からの収集手順とまとめ方。`/neta-shushu` で呼び出す。
+定義は `.claude/skills/neta-shushu/SKILL.md`。
+
 ## ファイル命名
 `YYYY-MM-DD_テーマ名_research.md`
